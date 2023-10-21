@@ -135,14 +135,92 @@ if(NOT cmsis_POPULATED)
     FetchContent_Populate(cmsis)
 endif()
 
+# if mbed TLS is enabled add it to the build
+if(NF_SECURITY_MBEDTLS)
+
+    # check if MBEDTLS_SOURCE was specified or if it's empty (default is empty)
+    set(NO_MBEDTLS_SOURCE TRUE)
+
+    if(MBEDTLS_SOURCE)
+        if(NOT ${MBEDTLS_SOURCE} STREQUAL "")
+            set(NO_MBEDTLS_SOURCE FALSE)
+        endif()
+    endif()
+
+    # set tag for currently supported version
+    # WHEN CHANGING THIS MAKE SURE TO UPDATE THE DEV CONTAINERS
+    set(MBEDTLS_GIT_TAG "mbedtls-2.28.0")
+    # set(MBEDTLS_GIT_TAG "mbedtls-2.16.12")
+
+    # set options for mbed TLS
+    option(ENABLE_TESTING "no testing when building mbed TLS." OFF)
+
+    if(NO_MBEDTLS_SOURCE)
+        # no mbed TLS source specified, download it from it's repo
+        message(STATUS "mbedTLS ${MBEDTLS_GIT_TAG} from GitHub repo")
+
+        FetchContent_Declare(
+            mbedtls
+            GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
+            GIT_TAG ${MBEDTLS_GIT_TAG}
+        )
+
+    else()
+        # mbedTLS source was specified
+
+        message(STATUS "mbedTLS ${MBEDTLS_GIT_TAG} (source from: ${MBEDTLS_SOURCE})")
+            
+        FetchContent_Declare(
+            mbedtls
+            SOURCE_DIR ${MBEDTLS_SOURCE}
+        )
+
+    endif()
+
+    # Check if population has already been performed
+    FetchContent_GetProperties(mbedtls)
+    if(NOT mbedtls_POPULATED)
+        # Fetch the content using previously declared details
+        FetchContent_Populate(mbedtls)
+    endif()
+
+    # don't include tests or programs, only build libraries
+    set(ENABLE_TESTING CACHE BOOL OFF)
+    set(ENABLE_PROGRAMS CACHE BOOL OFF)
+
+    cmake_policy(SET CMP0048 NEW)
+    add_subdirectory(${mbedtls_SOURCE_DIR} mbedtls_build)
+
+endif()
+
 # FreeRTOS common directories
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/_common)
 
 # try to find board in the targets folder
 # and set target base location and base path for class libs
 # this has to be set before the class library modules are pulled in
-if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/${TARGET_BOARD})
+if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/RASPI/${TARGET_BOARD})
 
+    set(NFSTBC_HAS_NANOBOOTER OFF INTERNAL "make global")
+    set(TARGET_VENDOR "RASPI" CACHE INTERNAL "make global")
+    # board found
+    message(STATUS "Support for target board '${TARGET_BOARD}' found")
+
+    # Define base path for the class libraries
+    nf_set_base_path_for_libraries_modules(${CMAKE_SOURCE_DIR}/targets/FreeRTOS/RASPI/_nanoCLR)
+
+    # set target base location
+    set(TARGET_BASE_LOCATION ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/RASPI/${TARGET_BOARD})
+
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/RASPI)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/RASPI/lib)
+
+    # add TARGET board directory
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/RASPI/${TARGET_BOARD})
+
+elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/${TARGET_BOARD})
+
+    set(TARGET_VENDOR "RASPI" CACHE INTERNAL "make global")
     # board found
     message(STATUS "Support for target board '${TARGET_BOARD}' found")
 
@@ -160,6 +238,7 @@ if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/${TARGET_BOARD})
 # try to find board in the targets folder
 elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/ST/${TARGET_BOARD})
 
+    set(TARGET_VENDOR "ST" CACHE INTERNAL "make global")
     # board found
     message(STATUS "Support for target board '${TARGET_BOARD}' found")
 

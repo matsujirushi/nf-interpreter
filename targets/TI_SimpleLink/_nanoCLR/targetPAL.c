@@ -4,7 +4,7 @@
 //
 
 #include <ti/drivers/UART2.h>
-#include <Board.h>
+#include <board.h>
 #include <ti/drivers/dpl/SemaphoreP.h>
 
 #include <ti_drivers_config.h>

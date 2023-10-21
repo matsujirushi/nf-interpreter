@@ -54,6 +54,14 @@ set(CMAKE_C_STANDARD 17 CACHE INTERNAL "C standard for all targets")
 set(CMAKE_CXX_STANDARD 17 CACHE INTERNAL "C++ standard for all targets")
 
 # set all C and C++ extensions to be OFF on ALL targets
+# this forces the use of -std=c11 and -std=c++11 instead of -std=gnu11 and -std=gnu++11
+if("${TARGET_SERIES}" STREQUAL "RP2040")
+# RP2040 needs gnu11 instead of c++11
+# set(CMAKE_C_EXTENSIONS OFF CACHE INTERNAL "C compiler extensions OFF")
+# set(CMAKE_CXX_EXTENSIONS OFF CACHE INTERNAL "C++ compiler extensions OFF")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+else()
 # this forces the use of -std=c17 and -std=c++17 instead of -std=gnu17 and -std=gnu++17
 set(CMAKE_C_EXTENSIONS OFF CACHE INTERNAL "C compiler extensions OFF")
 set(CMAKE_CXX_EXTENSIONS OFF CACHE INTERNAL "C++ compiler extensions OFF")
+endif()

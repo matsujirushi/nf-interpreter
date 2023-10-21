@@ -1,0 +1,56 @@
+{
+    "version": 4,
+    "include": [
+        "../../../../CMake/arm-gcc.json",
+        "../../../../config/user-tools-repos.json",
+        "../../../../config/user-prefs.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "RASPI_PICO",
+            "inherits": [
+                "arm-gcc-cortex-preset",
+                "user-tools-repos",
+                "user-prefs"
+            ],
+            "hidden": false,
+            "cacheVariables": {
+                "TARGET_BOARD": "RASPI_PICO",
+                "TARGET_SERIES": "RP2040",
+                "SUPPORT_ANY_BASE_CONVERSION": "ON",
+                "RTOS": "FreeRTOS",
+                "RTOS_VERSION": "",
+                "CMSIS_VERSION": "",
+                "FATFS_VERSION": "",
+                "LWIP_VERSION": "",
+                "NF_TARGET_HAS_NANOBOOTER": "OFF",
+                "NF_BUILD_RTM": "OFF",
+                "NF_FEATURE_DEBUGGER": "ON",
+                "NF_FEATURE_HAS_SDCARD": "OFF",
+                "NF_FEATURE_SUPPORT_REFLECTION": "ON",
+                "NF_FEATURE_RTC": "ON",
+                "NF_FEATURE_HAS_CONFIG_BLOCK": "ON",
+                "NF_SECURITY_MBEDTLS": "OFF",
+                "API_System.Device.Gpio": "ON",
+                "API_System.Device.Spi": "ON",
+                "API_System.Device.I2c": "ON",
+                "API_System.Device.Adc": "ON",
+                "API_System.Device.Pwm": "ON",
+                "API_System.IO.Ports": "ON",
+                "API_nanoFramework.ResourceManager": "ON",
+                "API_nanoFramework.System.Collections": "ON",
+                "API_nanoFramework.System.Text": "ON",
+                "API_System.Net": "OFF",
+                "API_System.Math": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "inherits": "base-user",
+            "name": "RASPI_PICO",
+            "displayName": "RASPI_PICO",
+            "configurePreset": "RASPI_PICO"
+        }
+    ]
+}

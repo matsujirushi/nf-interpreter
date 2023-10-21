@@ -12,6 +12,7 @@
 #include <lwipopts.h>
 
 // global mutex protecting the internal state of the interpreter, including event flags
+#if !defined(RP2040)
 #define GLOBAL_LOCK()                                                                                                  \
     ;                                                                                                                  \
     UBaseType_t uxSavedInterruptStatus = 0;                                                                            \
@@ -33,7 +34,9 @@
     {                                                                                                                  \
         portEXIT_CRITICAL();                                                                                           \
     }
-
+#endif
+#define GLOBAL_LOCK()
+#define GLOBAL_UNLOCK()
 // platform dependent delay
 #define PLATFORM_DELAY(milliSecs) vTaskDelay(milliSecs / portTICK_PERIOD_MS);
 
