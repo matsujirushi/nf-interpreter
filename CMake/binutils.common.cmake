@@ -475,12 +475,13 @@ macro(nf_setup_target_build_common)
         "BOOTER_EXTRA_COMPILE_DEFINITIONS;CLR_EXTRA_COMPILE_DEFINITIONS;BOOTER_EXTRA_COMPILE_OPTIONS;CLR_EXTRA_COMPILE_OPTIONS;BOOTER_EXTRA_LINK_FLAGS;CLR_EXTRA_LINK_FLAGS;BOOTER_EXTRA_SOURCE_FILES;CLR_EXTRA_SOURCE_FILES;BOOTER_EXTRA_LIBRARIES;CLR_EXTRA_LIBRARIES" 
         ${ARGN})
 
-    if(NOT NFSTBC_HAS_NANOBOOTER 
-        AND (BOOTER_EXTRA_SOURCE_FILES OR BOOTER_EXTRA_COMPILE_DEFINITIONS OR BOOTER_EXTRA_LINKMAP_PROPERTIES))
+    # if(NOT NFSTBC_HAS_NANOBOOTER 
+    if(NOT NF_TARGET_HAS_NANOBOOTER AND (BOOTER_EXTRA_SOURCE_FILES OR BOOTER_EXTRA_COMPILE_DEFINITIONS OR BOOTER_EXTRA_LINKMAP_PROPERTIES))
         message(FATAL_ERROR "Add files/options for booter without setting HAS_NANOBOOTER argument when calling nf_setup_target_build()")
     endif()
 
-    if(NFSTBC_HAS_NANOBOOTER AND (NOT NFSTBC_BOOTER_LINKER_FILE OR "${NFSTBC_BOOTER_LINKER_FILE}" STREQUAL ""))
+    # if(NFSTBC_HAS_NANOBOOTER AND (NOT NFSTBC_BOOTER_LINKER_FILE OR "${NFSTBC_BOOTER_LINKER_FILE}" STREQUAL ""))
+    if(NF_TARGET_HAS_NANOBOOTER AND (NOT NFSTBC_BOOTER_LINKER_FILE OR "${NFSTBC_BOOTER_LINKER_FILE}" STREQUAL ""))
         message(FATAL_ERROR "Need to provide BOOTER_LINKER_FILE argument when target has HAS_NANOBOOTER defined")
     endif()
     
@@ -503,7 +504,8 @@ macro(nf_setup_target_build_common)
 
     add_subdirectory("common")
 
-    if(NFSTBC_HAS_NANOBOOTER)
+    # if(NFSTBC_HAS_NANOBOOTER)
+    if (NF_TARGET_HAS_NANOBOOTER)
         add_subdirectory("nanoBooter")
     endif()
 
@@ -511,7 +513,11 @@ macro(nf_setup_target_build_common)
 
     #######################
     # nanoBooter executable
-    if(NFSTBC_HAS_NANOBOOTER)
+    # if(NFSTBC_HAS_NANOBOOTER)
+    if (NF_TARGET_HAS_NANOBOOTER)
+
+        # Enable assembler
+        enable_language(ASM)
 
         add_executable(
             # executables for project, project sources
@@ -520,6 +526,10 @@ macro(nf_setup_target_build_common)
             # extra build files 
             ${NFSTBC_BOOTER_EXTRA_SOURCE_FILES}
         )
+
+        if("${TARGET_SERIES}" STREQUAL "RP2040")
+             target_link_libraries(${NANOBOOTER_PROJECT_NAME}.elf rp2040)
+        endif()
 
         nf_add_platform_packages(TARGET ${NANOBOOTER_PROJECT_NAME})
         nf_add_platform_dependencies(${NANOBOOTER_PROJECT_NAME})
@@ -559,6 +569,9 @@ macro(nf_setup_target_build_common)
 
     endif()
 
+    # Enable assembler
+    enable_language(ASM)
+
     #######################
     # nanoCLR executable
     add_executable(
@@ -568,6 +581,10 @@ macro(nf_setup_target_build_common)
         # extra build files 
         ${NFSTBC_CLR_EXTRA_SOURCE_FILES}
     )
+
+    if("${TARGET_SERIES}" STREQUAL "RP2040")
+        target_link_libraries(${NANOCLR_PROJECT_NAME}.elf rp2040)
+    endif()
 
     nf_add_platform_packages(TARGET ${NANOCLR_PROJECT_NAME})
     nf_add_platform_dependencies(${NANOCLR_PROJECT_NAME})
@@ -635,7 +652,8 @@ macro(nf_setup_target_build_common)
         EXTRA_LINKMAP_PROPERTIES ${NFSTBC_CLR_EXTRA_LINKMAP_PROPERTIES})
 
     # generate output files
-    if(NFSTBC_HAS_NANOBOOTER)
+    # if(NFSTBC_HAS_NANOBOOTER)
+    if(NF_TARGET_HAS_NANOBOOTER)
         nf_generate_build_output_files(${NANOBOOTER_PROJECT_NAME}.elf)
     endif()
 

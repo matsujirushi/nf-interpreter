@@ -30,7 +30,8 @@ endfunction()
 macro(nf_set_compile_definitions)
 
     # parse arguments
-    cmake_parse_arguments(NFSCD "" "TARGET;BUILD_TARGET" "EXTRA_COMPILE_DEFINITIONS" ${ARGN})
+    # cmake_parse_arguments(NFSCD "" "TARGET;BUILD_TARGET" "EXTRA_COMPILE_DEFINITIONS" ${ARGN})
+    cmake_parse_arguments(NFSCD "" "TARGET" "EXTRA_COMPILE_DEFINITIONS;BUILD_TARGET" ${ARGN})
 
     if(NOT NFSCD_TARGET OR "${NFSCD_TARGET}" STREQUAL "")
         message(FATAL_ERROR "Need to set TARGET argument when calling nf_set_compile_definitions()")
@@ -81,6 +82,8 @@ endmacro()
 # To be called from target CMakeList.txt
 macro(nf_add_platform_dependencies target)
 
+    set(TARGET_VENDOR_COMMON_INCLUDE_DIRS ${TARGET_${TARGET_VENDOR}_COMMON_INCLUDE_DIRS} CACHE INTERNAL "make global")
+    set(TARGET_VENDOR_NANOCLR_INCLUDE_DIRS ${TARGET_${TARGET_VENDOR}_NANOCLR_INCLUDE_DIRS} CACHE INTERNAL "make global")
     nf_add_common_dependencies(${target})
     
     # packages specific for nanoBooter
@@ -95,9 +98,11 @@ macro(nf_add_platform_dependencies target)
             EXTRA_INCLUDES
                 ${CMSIS_INCLUDE_DIRS}
                 ${FreeRTOS_INCLUDE_DIRS}
-                ${TARGET_NXP_COMMON_INCLUDE_DIRS}
+                ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
                 ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
-                ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS})
+                ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS}
+                ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}
+                ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR)
 
         add_dependencies(${target}.elf nano::NF_CoreCLR)
        
@@ -105,9 +110,11 @@ macro(nf_add_platform_dependencies target)
             EXTRA_INCLUDES
                 ${CMSIS_INCLUDE_DIRS}
                 ${FreeRTOS_INCLUDE_DIRS}
-                ${TARGET_NXP_COMMON_INCLUDE_DIRS}
+                ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
                 ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
-                ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS})
+                ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS}
+                ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}
+                ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR)
         
         add_dependencies(${target}.elf nano::WireProtocol)
 
@@ -117,9 +124,11 @@ macro(nf_add_platform_dependencies target)
                 EXTRA_INCLUDES
                     ${CMSIS_INCLUDE_DIRS}
                     ${FreeRTOS_INCLUDE_DIRS}
-                    ${TARGET_NXP_COMMON_INCLUDE_DIRS}
+                    ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
                     ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
-                    ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS})
+                    ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS}
+                    ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}
+                    ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR)
             
             add_dependencies(${target}.elf nano::NF_Debugger)
 
@@ -130,13 +139,13 @@ macro(nf_add_platform_dependencies target)
                 ${CMSIS_INCLUDE_DIRS}
                 ${FreeRTOS_INCLUDE_DIRS}
                 ${LWIP_INCLUDE_DIRS}
-                ${TARGET_NXP_COMMON_INCLUDE_DIRS}
-                ${TARGET_NXP_NANOCLR_INCLUDE_DIRS}
+                ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
+                ${TARGET_VENDOR_NANOCLR_INCLUDE_DIRS}
                 ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
                 ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS}
                 ${FATFS_INCLUDE_DIRS}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/_fatfs
+                ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/${TARGET_VENDOR}/_fatfs
                 ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD})
         
         add_dependencies(${target}.elf nano::NF_NativeAssemblies)
@@ -150,12 +159,19 @@ macro(nf_add_platform_dependencies target)
                     ${LWIP_SOURCES}
                 EXTRA_INCLUDES 
                     ${FreeRTOS_INCLUDE_DIRS}
-                    ${TARGET_NXP_COMMON_INCLUDE_DIRS}
+                    ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
                     ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
                     ${LWIP_INCLUDE_DIRS}
-                    ${CMSIS_INCLUDE_DIRS})
+                    ${CMSIS_INCLUDE_DIRS}
+                    ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}
+                    ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR)
 
             add_dependencies(${target}.elf nano::NF_Network)
+
+            # security provider is mbedTLS
+            if(USE_SECURITY_MBEDTLS_OPTION)
+                add_dependencies(NF_Network nano::NF_Network)
+            endif()
 
         endif()
 
@@ -167,10 +183,13 @@ endmacro()
 # To be called from target CMakeList.txt
 macro(nf_add_platform_include_directories target)
 
+    set(TARGET_VENDOR_COMMON_INCLUDE_DIRS ${TARGET_${TARGET_VENDOR}_COMMON_INCLUDE_DIRS} CACHE INTERNAL "make global")
+    set(TARGET_VENDOR_NANOBOOTER_INCLUDE_DIRS ${TARGET_${TARGET_VENDOR}_NANOBOOTER_INCLUDE_DIRS} CACHE INTERNAL "make global")
+    set(TARGET_VENDOR_NANOCLR_INCLUDE_DIRS ${TARGET_${TARGET_VENDOR}_NANOCLR_INCLUDE_DIRS} CACHE INTERNAL "make global")
     target_include_directories(${target}.elf PUBLIC
 
         ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
-        ${TARGET_NXP_COMMON_INCLUDE_DIRS}
+        ${TARGET_VENDOR_COMMON_INCLUDE_DIRS}
         ${FreeRTOS_INCLUDE_DIRS}
         ${CMSIS_INCLUDE_DIRS}
     )
@@ -180,7 +199,7 @@ macro(nf_add_platform_include_directories target)
 
         target_include_directories(${target}.elf PUBLIC
             
-            ${TARGET_NXP_NANOBOOTER_INCLUDE_DIRS}
+            ${TARGET_VENDOR_NANOBOOTER_INCLUDE_DIRS}
             ${TARGET_FREERTOS_NANOBOOTER_INCLUDE_DIRS}
         )
 
@@ -191,17 +210,29 @@ macro(nf_add_platform_include_directories target)
 
         target_include_directories(${target}.elf PUBLIC
 
-            ${TARGET_NXP_NANOCLR_INCLUDE_DIRS}
+            ${TARGET_VENDOR_NANOCLR_INCLUDE_DIRS}
             ${NANOCLR_PROJECT_INCLUDE_DIRS}
             ${TARGET_FREERTOS_COMMON_INCLUDE_DIRS}
             ${TARGET_FREERTOS_NANOCLR_INCLUDE_DIRS}
             ${LWIP_INCLUDE_DIRS}
             ${CMAKE_CURRENT_BINARY_DIR}
+        )
 
+                
+        if(USE_SECURITY_MBEDTLS_OPTION)
+
+            # need to add extra include directories for mbedTLS
+            target_include_directories(
+                mbedcrypto PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/targets/${RTOS}/${TARGET_VENDOR}/${TARGET_BOARD}/nanoCLR>
+                $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/targets/${RTOS}/${TARGET_VENDOR}/${TARGET_BOARD}>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}>
         )
 
     endif()
 
+    endif()
 
 endmacro()
 
@@ -209,6 +240,9 @@ endmacro()
 # To be called from target CMakeList.txt
 macro(nf_add_platform_sources target)
 
+    set(TARGET_VENDOR_COMMON_SOURCES ${TARGET_${TARGET_VENDOR}_COMMON_SOURCES} CACHE INTERNAL "make global")
+    set(TARGET_VENDOR_NANOBOOTER_SOURCES ${TARGET_${TARGET_VENDOR}_NANOBOOTER_SOURCES} CACHE INTERNAL "make global")
+    set(TARGET_VENDOR_NANOCLR_SOURCES ${TARGET_${TARGET_VENDOR}_NANOCLR_SOURCES} CACHE INTERNAL "make global")
     # add header files with common OS definitions and board definitions 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target_common.h.in
                    ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/target_common.h @ONLY)
@@ -217,7 +251,7 @@ macro(nf_add_platform_sources target)
     target_sources(${target}.elf PUBLIC
     
         ${TARGET_FREERTOS_COMMON_SOURCES}
-        ${TARGET_NXP_COMMON_SOURCES}
+        ${TARGET_VENDOR_COMMON_SOURCES}
         
         ${FreeRTOS_SOURCES}
     )
@@ -230,7 +264,7 @@ macro(nf_add_platform_sources target)
                        ${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoBooter/target_board.h @ONLY)
 
         target_sources(${target}.elf PUBLIC
-            ${TARGET_NXP_NANOBOOTER_SOURCES}
+            ${TARGET_VENDOR_NANOBOOTER_SOURCES}
         )
 
     endif()
@@ -245,8 +279,8 @@ macro(nf_add_platform_sources target)
         target_sources(${target}.elf PUBLIC
             ${TARGET_FREERTOS_COMMON_SOURCES}
             ${TARGET_FREERTOS_NANOCLR_SOURCES}
-            ${TARGET_NXP_COMMON_SOURCES}
-            ${TARGET_NXP_NANOCLR_SOURCES}
+            ${TARGET_VENDOR_COMMON_SOURCES}
+            ${TARGET_VENDOR_NANOCLR_SOURCES}
             ${FATFS_SOURCES}
         )
 
@@ -254,6 +288,15 @@ macro(nf_add_platform_sources target)
             target_link_libraries(${target}.elf
                 nano::NF_Network
             )
+
+            if(USE_SECURITY_MBEDTLS_OPTION)
+                target_link_libraries(${target}.elf
+                mbedtls
+                )
+
+                add_dependencies(NF_Network mbedtls)
+            endif()
+
         endif()
 
     endif()

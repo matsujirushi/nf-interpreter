@@ -3,7 +3,10 @@
 // See LICENSE file in the project root for full license information.
 //
 
+#if defined(CPU_MIMXRT1062CVL5A)
 #include "MIMXRT1062.h"
+#endif
+void NVIC_SystemReset(void);
 
 __attribute__((used)) void prvGetRegistersFromStack(unsigned int *pulFaultStackAddress)
 {
@@ -44,7 +47,9 @@ __attribute__((used)) void prvGetRegistersFromStack(unsigned int *pulFaultStackA
     __asm volatile("BKPT #0\n");
 
     // If no debugger connected, just reset the board
+#if defined(NO_DEBUGGER)
     NVIC_SystemReset();
+#endif
 
     for (;;)
         ;
@@ -52,6 +57,7 @@ __attribute__((used)) void prvGetRegistersFromStack(unsigned int *pulFaultStackA
 
 __attribute__((naked, aligned(4))) void HardFault_Handler(void)
 {
+#if defined(CPU_MIMXRT1062CVL5A)
     __asm volatile(" tst lr, #4                                                \n"
                    " ite eq                                                    \n"
                    " mrseq r0, msp                                             \n"
@@ -60,4 +66,22 @@ __attribute__((naked, aligned(4))) void HardFault_Handler(void)
                    " ldr r2, handler2_address_const                            \n"
                    " bx r2                                                     \n"
                    " handler2_address_const: .word prvGetRegistersFromStack    \n");
+#elif defined(RP2040)
+    __asm volatile
+    (
+        " movs r0, #4                                               \n"
+        " movs r1, lr                                               \n"
+        " tst r0, r1                                                \n"
+        " beq _MSP                                                  \n"
+        " mrs r0, psp                                               \n"
+        " b _GetPC                                                  \n"
+        " _MSP:                                                     \n"
+        " mrs r0, msp                                               \n"
+        " _GetPC:                                                   \n"
+        " ldr r1, [r0, #20]                                         \n"
+        " ldr r2, handler2_address_const                            \n"
+        " bx r2                                                     \n"
+        " handler2_address_const: .word prvGetRegistersFromStack    \n"
+    );
+#endif
 }

@@ -13,7 +13,7 @@ list(APPEND LWIP_INCLUDE_DIRS ${lwip_SOURCE_DIR}/src/include/netif)
 list(APPEND LWIP_INCLUDE_DIRS ${lwip_SOURCE_DIR}/src/include/compat)
 list(APPEND LWIP_INCLUDE_DIRS ${lwip_SOURCE_DIR}/src/include/compat/posix)
 list(APPEND LWIP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/DeviceInterfaces/Networking.Sntp)
-list(APPEND LWIP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/_LwIP)
+list(APPEND LWIP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/targets/FreeRTOS/${TARGET_VENDOR}/_LwIP)
 
 set(LWIP_SRCS
 
@@ -191,7 +191,7 @@ foreach(SRC_FILE ${LWIP_SRCS})
 
 			# ${CMAKE_SOURCE_DIR}/targets/ChibiOS/_Lwip
 			# TODO: this needs to be changed so it's not platform dependent
-			${CMAKE_SOURCE_DIR}/targets/FreeRTOS/NXP/_LwIP
+			${CMAKE_SOURCE_DIR}/targets/FreeRTOS/${TARGET_VENDOR}/_LwIP
 
             # APPS:
             ${lwip_SOURCE_DIR}/src/apps/snmp

@@ -1,6 +1,8 @@
 {
     "version": 4,
     "include": [
-        "NXP/NXP_MIMXRT1060_EVK/CMakePresets.json"
+        "NXP/NXP_MIMXRT1060_EVK/CMakePresets.json",
+        "RASPI/RASPI_PICO/CMakePresets.json",
+        "RASPI/EVB_PICO/CMakePresets.json"
     ]
 }
